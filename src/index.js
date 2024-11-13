@@ -7,7 +7,7 @@ dotenv.config({
     path:'./env'
 })
 
-connectDB()
+connectDB()  //asynchronous method he so ye function after execution promise bhi return karta he
 .then(()=>{
   app.listen(process.env.PORT || 8000,()=>{
     console.log(`Server is running at ${process.env.PORT}`);
@@ -48,7 +48,7 @@ connectDB()
 
 
 
-//first aproach to connect to database
+//first aproach to connect to database in this we are going to write code in index.js not in db folders index.js 
 /*import express from "express";
 const app= express();
 (async()=>{

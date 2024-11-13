@@ -9,7 +9,7 @@ const userSchema = new Schema(
     required:true,
     unique:true,
     lowercase:true,
-    trim:true,
+    trim:true,    // Trims whitespace from the beginning and end of the string
     index:true  //searchin enable karne he kisi field pe like yaha pe username to index field true kar do optimize karta he
    },
    email:{
@@ -58,6 +58,7 @@ userSchema.pre('save',async function (next){
         return next()
     }    
 })
+//checking of password
 userSchema.methods.isPasswordCorrect = async function(password){
    return await bcrypt.compare(password,this.password)
 }
@@ -83,7 +84,7 @@ userSchema.methods.generateRefreshToken = function(){
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
-            expiresIn:process.env.REFRESH_TOKEN_EXPIRY
+            expiresIn:process.env.REFRESH_TOKEN_EXPIRY   //The client uses the refresh token to request a new access token.When the server verifies the refresh token, it generates a new access token (and possibly a new refresh token) to extend the session.
         }
     ) 
 }
