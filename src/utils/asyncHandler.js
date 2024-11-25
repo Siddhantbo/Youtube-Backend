@@ -19,7 +19,7 @@ export {asyncHandler}
 //first way
 //const asyncHandler = () =>{}
 //const asyncHandler = (fn) =>{()=>{}}
-//const asyncHandler = (fn) => async () => {}
+//const asyncHandler = (fn) => async () => {}  higher order function
 
 /*const asyncHandler = (fn) => async (req,res,next)=>{
    try {

@@ -18,7 +18,7 @@ app.use(cookieParser())
 import userRouter from './routes/user.routes.js'
 
 //routes declaration
-app.use("/api/v1/users",userRouter)
+app.use("/api/v1/users",userRouter)  // we have to use middleware here because now we have separated router file 
 
 
 //http://localhost:8000/api/v1/users/register
