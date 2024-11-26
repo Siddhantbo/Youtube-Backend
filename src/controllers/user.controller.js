@@ -4,6 +4,24 @@ import { User } from '../models/user.model.js'
 import { uploadOnCloudinary } from '../utils/cloudinery.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
 
+//creating function for generating access and refreshtokens
+
+const generateAccessAndRefreshTokens = async(userId) =>{
+  try {
+    const user = await User.findById(userId)
+    const accessToken = user.generateAccessToken()
+    const refreshToken = user.generateRefreshToken()
+    //store the refresh token in db
+    user.refreshToken= refreshToken
+    await user.save({validateBeforeSave:false})  //jab bhi save karne jayenge tab baki ke field bhi kick in ho jate he for example password field is required ye problem aa sakata he s we use this
+
+    return {accessToken,refreshToken}
+  } catch (error) {
+    throw new ApiError(500,"Something went wrong while generating refresh and access tokens")
+  }
+}
+
+
 const registerUser = asyncHandler(async (req,res)=>{
   //get user details from frontend
   //validation - not empty
@@ -14,7 +32,7 @@ const registerUser = asyncHandler(async (req,res)=>{
   //remove password and refresh token field from response
   //check for user creation
   //return response
-
+   
 
     //get user details from frontend
   const {fullName,email,username,password}=req.body
@@ -90,5 +108,92 @@ const registerUser = asyncHandler(async (req,res)=>{
   )
 })
 
-export {registerUser}
+
+const loginUser = asyncHandler(async (req,res) =>{
+    //get username or email from user (req.body)
+    //check whether the username or email exists in db or not?
+    //then get user password from user
+    //check the password is correct or not?
+    //if correct then login the user
+    //and generate refresh and access token for user
+    //send both tokens in cookies
+    
+    const {email,username,password} = req.body
+     
+    if(!username || !email)
+    {
+       throw new ApiError(400,"username or email is required")
+    }
+    
+    const user = await User.findOne({  //user is whole object we get from monogDb
+      $or:[{username},{email}]
+    })
+
+    if(!user)
+    {
+      throw new ApiError(404,"User does not exist")
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password)
+
+     if(!isPasswordValid)
+     {
+        throw new ApiError(401,"Invalid user credentials")
+     }
+
+    const {accessToken,refreshToken} = await generateAccessAndRefreshTokens(user._id)
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+
+    const options = {
+      httpOnly:true,  //this both field : they prevent cookies from getting modified on frontend by enabling this two fields cookies can only be modified on server
+      secure :true
+    }
+     
+
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user:loggedInUser,accessToken,refreshToken
+        },
+        "User Logged In Successfully"
+      )
+    )
+})
+
+const logoutUser = asyncHandler(async(req,res)=>{
+     await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set:{
+          refreshToken: undefined
+        }
+      },
+      {
+        new:true
+      }
+     )
+
+     const options = {
+      httpOnly:true,  
+      secure :true
+    }
+    return res
+    .status(200)
+    .clearCookie("accessToken",options)
+    .clearCookie("refreshToken",options)
+    .json(new ApiResponse(200,{},"User Logged Out"))
+
+     
+})
+export {
+  registerUser,
+  loginUser,
+  logoutUser
+}
 
