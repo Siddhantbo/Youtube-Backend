@@ -1,4 +1,5 @@
 import {v2 as cloudinary} from "cloudinary"
+import { error } from "console";
 import fs from "fs"
 
  // Configuration
@@ -26,5 +27,27 @@ const uploadOnCloudinary = async(localFilePath)=>{
       return null;
    }
 }
+const getPublicId = (url)=>{
+   const parts = url.split("/upload/")
 
-export {uploadOnCloudinary}
+   const publicId = parts[1].split("/")[1].split(".")[0];
+
+   return publicId;
+}
+ const deleteAvatar = async(url)=>{
+   try {
+      const publicId = getPublicId(url);
+      console.log(publicId)
+      if(!publicId)
+      {
+         throw new Error("Invalid Cloudinary URL");
+      }
+      const result = await cloudinary.uploader.destroy(publicId)
+
+      console.log("Image deleted:",result)
+   } catch (error) {
+      console.log("Error deleting image:", error.message)
+   }
+}
+
+export {uploadOnCloudinary,deleteAvatar}

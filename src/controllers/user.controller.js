@@ -1,7 +1,7 @@
 import {asyncHandler} from '../utils/asyncHandler.js'
 import {ApiError} from "../utils/ApiError.js"
 import { User } from '../models/user.model.js'
-import { uploadOnCloudinary } from '../utils/cloudinery.js'
+import { uploadOnCloudinary,deleteAvatar} from '../utils/cloudinery.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
 import jwt from "jsonwebtoken"
 
@@ -278,7 +278,11 @@ const changeCurrentPassword = asyncHandler(async(req,res)=>{
 const getCurrentUser = asyncHandler(async(req,res)=>{
   return res
   .status(200)
-  .json(200,req.user,"current User Fetched Succesfully")
+  .json(new ApiResponse(
+    200,
+    req.user,
+    "current User Fetched Succesfully"
+  ))
 })
 
 const updateAccountDetails = asyncHandler(async(req,res)=>{
@@ -289,7 +293,7 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
     throw new ApiError(400, "All Fields are required")
   }
 
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       req.user?._id,
       {
         $set:{
@@ -314,6 +318,9 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
 })
 
 const updateUserAvatar = asyncHandler(async(req,res)=>{
+     const oldUser = req.user;
+     //console.log(req.user);
+
      const avatarLocalPath = req.file?.path
 
      if(!avatarLocalPath)
@@ -327,7 +334,7 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
       {
         throw new ApiError(400,"Error while uploading avatar on cloudinery")
       }
-
+      await deleteAvatar(oldUser.avatar)
       const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
@@ -352,6 +359,7 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
 })
 
 const updateUserCoverImage = asyncHandler(async(req,res)=>{
+  const oldUser = req.user;
   const coverImageLocalPath = req.file?.path
 
   if(!coverImageLocalPath)
@@ -365,7 +373,7 @@ const updateUserCoverImage = asyncHandler(async(req,res)=>{
    {
      throw new ApiError(400,"Error while uploading coverImage  on cloudinery")
    }
-
+   await deleteAvatar(oldUser.avatar)
    const user = await User.findByIdAndUpdate(
      req.user?._id,
      {
